@@ -14,6 +14,16 @@ jobs:
       with:
         submodules: recursive  # Fetch Hugo themes (if you're using any as a submodule)
 
+    - name: Setup Node.js  
+      uses: actions/setup-node@v3  
+      with:  
+        node-version: '16'  # Set the Node.js version  
+  
+    - name: Install Node.js dependencies  
+      run: |  
+        npm install -g postcss-cli  
+        npm install -g autoprefixer  
+
     - name: Setup Hugo
       uses: peaceiris/actions-hugo@v2
       with:
