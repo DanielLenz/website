@@ -1,44 +1,46 @@
-name: Deployment to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
-  pull_request:
-
-env:
-  REPO_NAME: ${{ github.event.repository.name }}
-  REPO_OWNER: ${{ github.repository_owner }}
 
 jobs:
   deploy:
-    runs-on: ubuntu-22.04
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-        # with:
-        #   fetch-depth: 0 # Fetch all history for .GitInfo and .Lastmod
-
-      - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
-          hugo-version: "0.134.2"
-          extended: true
+          submodules: recursive
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: "package-lock.json"
 
-      - run: npm ci
-      - run: hugo --baseURL https://${REPO_OWNER}.github.io/${REPO_NAME} --minify
+      - name: Install PostCSS
+        run: |
+          npm install postcss-cli autoprefixer
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
-        if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: "latest"
+          extended: true
+
+      - name: Build Hugo Site
+        run: hugo --minify
+        # run: hugo --minify --theme docsy
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: true
+          publish_branch: gh-pages
